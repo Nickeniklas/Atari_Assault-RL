@@ -1,0 +1,9 @@
+gymnasium
+ale_py
+numpy
+matplotlib
+pandas
+torch
+torchvision
+stable-baselines3
+optuna
