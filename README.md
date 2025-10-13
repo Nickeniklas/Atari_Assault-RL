@@ -1,8 +1,6 @@
 # Reinforcement learning: Atari Assault 
 
-Atari Assault is an arcade-style tank shooter.
-
-Solved using PPO and DQN models.
+Atari Assault solved using PPO and DQN models.
 
 ### Environment
 gymnsasium: https://gymnasium.farama.org/
@@ -10,3 +8,22 @@ Ale: https://ale.farama.org/
 
 ### Agent Models
 Stable-baselines3: https://stable-baselines3.readthedocs.io/en/master/index.html
+
+# Setup
+1. create virutal environment
+
+2. install requirements.txt
+
+3. run main.py
+
+Choose model by changing in `__main__`: 
+```
+agent.set_model(name="PPO", env=env) # "DQN" or "PPO"
+```
+
+**Output:** saved trained model and tensorboard file.  
+
+## Visualize results in browser (tensorboard)
+```
+tensorboard --logdir ./logs/ppo_assault_tensorboard/
+```
