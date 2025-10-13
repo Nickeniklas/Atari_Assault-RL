@@ -129,20 +129,25 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
     Tune DQN hyperparameters with Optuna.
     Returns the best hyperparameters and the corresponding study.
     """
-    
     def objective(trial):
+        # Suggest hyperparameters
+        learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1e-3)
+        gamma = trial.suggest_uniform("gamma", 0.90, 0.999)
+        exploration_fraction = trial.suggest_uniform("exploration_fraction", 0.1, 0.4)
+
+        # Create environment
+        env = Monitor(gym.make(env_id, render_mode=None))
+
         model = DQN(
             "CnnPolicy",
             env,
-            learning_rate=trial.suggest_loguniform("learning_rate", 1e-5, 1e-3),
-            gamma=trial.suggest_uniform("gamma", 0.90, 0.999),
-            exploration_fraction=trial.suggest_uniform("exploration_fraction", 0.1, 0.4),
+            learning_rate=learning_rate,
+            gamma=gamma,
+            exploration_fraction=exploration_fraction,
             verbose=0,
             seed=seed
         )
 
-        # Create environment
-        env = Monitor(gym.make(env_id, render_mode=None))
 
         # Train for a short number of timesteps
         model.learn(total_timesteps=timesteps)
@@ -242,7 +247,7 @@ if __name__ == "__main__":
         exploration_fraction=best_params["exploration_fraction"],
         verbose=1
     )
-    best_model.learn(total_timesteps=100_000)  # much longer training
+    best_model.learn(total_timesteps=50_000)  
     best_model.save("./models/DQN_assault_best")
     print("Best model trained and saved.")
 
