@@ -25,5 +25,5 @@ agent.set_model(name="PPO", env=env) # "DQN" or "PPO"
 
 ## Visualize results in browser (tensorboard)
 ```
-tensorboard --logdir ./logs/ppo_assault_tensorboard/
+tensorboard --logdir ./logs/assault_tensorboard/
 ```
