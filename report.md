@@ -1,6 +1,6 @@
 # Results
 
-PPO agent trained for 10_000 timesteps.
+PPO agent trained for 10_000 timesteps, with mostly default hyperparameters.
 
 **training output:**
 ```
@@ -53,7 +53,7 @@ Mean reward: 376.32
 Number of episodes: 175
 ```
 
-Barchart of rewards overtime:
+Barchart of rewards per episode:
 
 ![PPO best model figure](media/PPO_Figure_best.png)
 
@@ -62,6 +62,15 @@ So with a mean reward of 376 over 175 episodes; the progress is very slow but de
 Summary: 376.32 / 218.84 = 1.719, so with optimized hyperparameters — we increased score by roughly 71.9%. 
 
 ## DQN Agent
+
+### Non tuned agent
+**Output:**
+```
+Episode rewards: [168.0, 357.0, 147.0, 210.0, 189.0, 336.0, 336.0, 210.0, 252.0, 273.0, 336.0, 252.0]
+Mean reward: 255.5
+Number of episodes: 12
+```
+### Optuna tuning
 
 Tune parameters for 10_000 timesteps.
 
@@ -74,9 +83,26 @@ gamma = trial.suggest_uniform("gamma", 0.90, 0.999)
 exploration_fraction = trial.suggest_uniform("exploration_fraction", 0.1, 0.4)
 ```
 
+**Output:**
+```
+Best hyperparameters: {'learning_rate': 5.565274592749785e-05, 'gamma': 0.9865466308059884, 'exploration_fraction': 0.11351432355687767}
+```
+```
+Episode rewards: [126.0, 189.0, 357.0, 189.0, 252.0, 168.0, 252.0, 315.0, 336.0, 147.0, 21.0, 84.0, 126.0, 126.0, 378.0, 273.0, 147.0, 105.0, 462.0, 378.0, 189.0, 357.0, 399.0, 630.0, 336.0, 441.0, 189.0, 189.0, 147.0, 231.0, 210.0, 126.0, 210.0, 357.0, 189.0, 189.0, 189.0, 336.0, 231.0, 504.0, 189.0, 252.0, 189.0, 336.0, 357.0, 189.0, 189.0, 357.0, 210.0, 147.0, 315.0, 294.0, 273.0, 273.0, 378.0, 231.0, 189.0, 231.0, 168.0, 210.0, 399.0, 147.0, 315.0, 399.0]
+Mean reward: 254.953125
+Number of episodes: 64
+```
+
+Barchart of rewards per episode:
+![DQN best model figure](media/DQN_Figure_best.png)
+
+Summary: 254.95 / 255.5 = 0.997, which means the agent did not improve with optuna optimization and instead stayed stagnant. DQN does not work well with visual based problems. The model needs to be so complex that a regular computer might not be enough.
+
 # Extra
 The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
 Since Atari Assault is visual, we use CnnPolicy for our Agents.
+
+Buffer_size and learning_starts fixed to a low value to save memory, since DQN is very fast to eat up huge amounts of memory in such a game.
 
 # Sources
 
