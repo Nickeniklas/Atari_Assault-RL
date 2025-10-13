@@ -1,3 +1,10 @@
+# Resultat
+PPO agent tränad 10000 timesteps.
+
+Tensorboard på Browser screenshot:
+![tensorboard demo image](tensorboard_demo-image.png)
+
+
 # Annat
 
 ## Sources

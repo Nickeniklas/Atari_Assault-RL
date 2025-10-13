@@ -11,8 +11,8 @@ import os
 
 #gym.register_envs(ale_py) # if auto registration fails
 
-def setup_env():
-    env = gym.make('ALE/Assault-v5', render_mode="human")
+def setup_env(render_mode=None):
+    env = gym.make('ALE/Assault-v5', render_mode=render_mode)
     env = Monitor(env)
     
     # debugging
@@ -26,21 +26,22 @@ class agent:
         self.name = None
     def set_model(self, name, env):
         self.name = name
+        self.model = None
 
         if not os.path.exists('./logs'):
             os.makedirs('./logs')
 
         if name == "DQN":
             # Dqn Policy for image input, tensorboard logging for visualization
-            model = DQN("CnnPolicy", env, verbose=1, tensorboard_log="./logs/dqn_assault_tensorboard/")
+            self.model = DQN("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/{name}_assault_tensorboard/")
 
-        if name == "PPO":    
+        elif name == "PPO":    
             # Cnn Policy for image input, tensorboard logging for visualization
-            model = PPO("CnnPolicy", env, verbose=1, tensorboard_log="./logs/ppo_assault_tensorboard/")
+            self.model = PPO("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/{name}_assault_tensorboard/")
 
-        return model
+        return self.model
 
-def test_trained_agent(env, model, episodes = 5):
+def visualize_trained_agent(env, model, episodes=5):
     # testing run loop
     for episode in range(1, episodes+1):
         obs, info = env.reset()
@@ -57,30 +58,53 @@ def test_trained_agent(env, model, episodes = 5):
 
     env.close()
 
+def print_results(env):
+    episode_rewards = env.get_episode_rewards()  # only available after Monitor tracks episodes
+    print("Episode rewards:", episode_rewards)
+    print("Mean reward:", sum(episode_rewards)/len(episode_rewards))
+    print("Number of episodes:", len(episode_rewards))
+
+def plot_results(env):
+    episode_rewards = env.get_episode_rewards()  # only available after Monitor tracks episodes
+    plt.plot(episode_rewards)
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
+    plt.title("Training Reward Curve")
+    plt.show()
+
 # script run
 if __name__ == "__main__":
     print("Starting main.py")
     
     # setup env
     print("Setting up environment...")
-    env = setup_env()
+    env = setup_env(render_mode=None) # "human" or "rgb_array" or None
 
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model("PPO", env)
+    model = agent.set_model(name="PPO", env=env) # "DQN" or "PPO"
 
     # train agent
     print("Training model...")
-    model.learn(total_timesteps=10000)
+    agent.model.learn(total_timesteps=10000)
 
     # save agent
     print("Saving model...")
-    model.save(f"{model.name}_assault")
+    if not os.path.exists('./models'):
+        os.makedirs('./models')
+    agent.model.save(f"./models/{agent.name}_assault")
 
-    # test trained model
-    print("Testing model...")
-    test_trained_agent(env, model, episodes=3)
+    # print and plot results
+    print("Printing results...")
+    print_results(env)
+    print("Plotting results...")
+    plot_results(env)
+
+    # visualize trained model
+    #print("Testing model...")
+    #env = setup_env(render_mode="Human")
+    #visualize_trained_agent(env, agent.model, episodes=2)
 
 
     
