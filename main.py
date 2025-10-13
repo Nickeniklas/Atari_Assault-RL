@@ -1,4 +1,6 @@
 import gymnasium as gym
+from gymnasium.wrappers import AtariPreprocessing
+from gymnasium.wrappers import FrameStackObservation
 import ale_py
 import optuna
 from stable_baselines3 import DQN
@@ -13,14 +15,16 @@ import gc
 #gym.register_envs(ale_py) # if auto registration fails
 
 def setup_env(render_mode=None):
-    env = gym.make('ALE/Assault-v5', render_mode=render_mode)
-    env = Monitor(env)
+    base_env = gym.make('ALE/Assault-v5', render_mode=render_mode, frameskip=1) # disable base env skipping
+    monitor_env = Monitor(base_env)
+    preprocessing_env = AtariPreprocessing(monitor_env)  # grayscale, downsample, skip frames
+    stacked_env = FrameStackObservation(preprocessing_env, 4)       # stacked frames for temporal info
     
     # debugging
     #print("Action space:", env.action_space)
     #print("Observation space:", env.observation_space)
 
-    return env
+    return stacked_env, monitor_env
 
 class agent:
     def __init__(self):
@@ -35,7 +39,7 @@ class agent:
 
         if name == "DQN":
             # Dqn Policy for image input, tensorboard logging for visualization, memory handling
-            self.model = DQN("CnnPolicy", env, buffer_size=30_000, learning_starts=3000, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
+            self.model = DQN("CnnPolicy", env, buffer_size=50_000, learning_starts=5000, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
 
         elif name == "PPO":    
             # Cnn Policy for image input, tensorboard logging for visualization
@@ -45,7 +49,7 @@ class agent:
 
 def visualize_trained_agent(env, model, episodes=5):
     """ Visualize a trained agent in the environment. """
-    # testing run loop
+    # game loop
     for episode in range(1, episodes+1):
         obs, info = env.reset()
         done = False
@@ -61,16 +65,16 @@ def visualize_trained_agent(env, model, episodes=5):
 
     env.close()
 
-def print_results(env):
+def print_results(monitor_env):
     """ Print the results of the training in console. """
-    episode_rewards = env.get_episode_rewards()  # only available after Monitor tracks episodes
+    episode_rewards = monitor_env.get_episode_rewards()  # only available after Monitor tracks episodes
     print("Episode rewards:", episode_rewards)
     print("Mean reward:", sum(episode_rewards)/len(episode_rewards))
     print("Number of episodes:", len(episode_rewards))
 
-def plot_results(env):
+def plot_results(monitor_env):
     """ Plot the results of the training as bar chart. Reward per episode. """
-    episode_rewards = env.get_episode_rewards()  # only available after Monitor tracks episodes
+    episode_rewards = monitor_env.get_episode_rewards()  # only available after Monitor tracks episodes
     plt.plot(episode_rewards)
     plt.xlabel("Episode")
     plt.ylabel("Reward")
@@ -94,7 +98,7 @@ def tune_ppo(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         clip_range = trial.suggest_float("clip_range", 0.1, 0.4)
 
         # Create environment
-        env = Monitor(gym.make(env_id, render_mode=None)) 
+        env, monitor_env = setup_env(render_mode=None)
 
         # Create PPO model
         model = PPO(
@@ -114,7 +118,7 @@ def tune_ppo(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         model.learn(total_timesteps=timesteps)
 
         # Compute mean reward
-        episode_rewards = env.get_episode_rewards()
+        episode_rewards = monitor_env.get_episode_rewards()
         mean_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
 
         env.close()
@@ -141,13 +145,13 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         exploration_fraction = trial.suggest_float("exploration_fraction", 0.1, 0.4)
 
         # Create environment
-        env = Monitor(gym.make(env_id, render_mode=None))
+        env, monitor_env = setup_env(render_mode=None)
 
         model = DQN(
             "CnnPolicy",
             env,
-            buffer_size=30_000, # limit buffer size from memory usage
-            learning_starts=3000,
+            buffer_size=50_000, # limit buffer size from memory usage
+            learning_starts=5000,
             learning_rate=learning_rate,
             gamma=gamma,
             exploration_fraction=exploration_fraction,
@@ -159,7 +163,7 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         model.learn(total_timesteps=timesteps)
 
         # Compute mean reward
-        episode_rewards = env.get_episode_rewards()
+        episode_rewards = monitor_env.get_episode_rewards()
         mean_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
 
         # for memory issues
@@ -184,12 +188,12 @@ if __name__ == "__main__":
     
     # setup env
     print("Setting up environment...")
-    env = setup_env(render_mode=None) # "human" or "rgb_array" or None
+    env, monitor_env = setup_env(render_mode=None) # "human" or "rgb_array" or None
 
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model(name="DQN", env=env) # "DQN" or "PPO" 
+    model = agent.set_model(name="PPO", env=env) # "DQN" or "PPO" 
 
     # train agent
     print("Training model...")
@@ -203,9 +207,9 @@ if __name__ == "__main__":
 
     # print and plot results
     print("Printing results...")
-    print_results(env)
+    print_results(monitor_env)
     print("Plotting results...")
-    plot_results(env)
+    plot_results(monitor_env)
 
     env.close()
 
@@ -217,7 +221,7 @@ if __name__ == "__main__":
     if agent.name == "PPO":
         # OPTUNA tuning on PPO agent
         print("Tuning new PPO agent hyperparameters with Optuna...")
-        env = setup_env(render_mode=None) 
+        env, monitor_env = setup_env(render_mode=None) 
         best_params, study = tune_ppo(n_trials=15, timesteps=10_000)
         
         # Full training with best hyperparameters (longer)
@@ -227,8 +231,8 @@ if __name__ == "__main__":
             n_steps=best_params["n_steps"],
             gamma=best_params["gamma"],
             learning_rate=best_params["learning_rate"],
-            #ent_coef=best_params["ent_coef"],
-            #gae_lambda=best_params["gae_lambda"],
+            ent_coef=best_params["ent_coef"],
+            gae_lambda=best_params["gae_lambda"],
             clip_range=best_params["clip_range"],
             verbose=1
         )
@@ -238,24 +242,24 @@ if __name__ == "__main__":
 
         # print and plot results
         print("Printing results...")
-        print_results(env)
+        print_results(monitor_env)
         print("Plotting results...")
-        plot_results(env)
+        plot_results(monitor_env)
 
         env.close()
-        
+
     elif agent.name == "DQN":
         # OPTUNA tuning on DQN agent
         print("Tuning new DQN agent hyperparameters with Optuna...")
-        env = setup_env(render_mode=None) 
+        env, monitor_env = setup_env(render_mode=None) 
         best_params, study = tune_dqn(n_trials=10, timesteps=10_000)
         
         # Full training with best hyperparameters (longer)
         best_model = DQN(
             "CnnPolicy",
             env,
-            buffer_size=30_000, # limit buffer size from memory usage
-            learning_starts=3000,
+            buffer_size=50_000, # limit buffer size from memory usage
+            learning_starts=5000,
             learning_rate=best_params["learning_rate"],
             gamma=best_params["gamma"],
             exploration_fraction=best_params["exploration_fraction"],
@@ -268,9 +272,9 @@ if __name__ == "__main__":
 
         # print and plot results
         print("Printing results...")
-        print_results(env)
+        print_results(monitor_env)
         print("Plotting results...")
-        plot_results(env)
+        plot_results(monitor_env)
 
         env.close()
 
