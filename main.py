@@ -25,6 +25,7 @@ class agent:
     def __init__(self):
         self.name = None
     def set_model(self, name, env):
+        """ Set up the RL agent model based on the specified name. (Optional)"""
         self.name = name
         self.model = None
 
@@ -33,7 +34,7 @@ class agent:
 
         if name == "DQN":
             # Dqn Policy for image input, tensorboard logging for visualization
-            self.model = DQN("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/{name}_assault_tensorboard/")
+            self.model = DQN("CnnPolicy", env, buffer_size=50_000, verbose=1, tensorboard_log=f"./logs/{name}_assault_tensorboard/")
 
         elif name == "PPO":    
             # Cnn Policy for image input, tensorboard logging for visualization
@@ -42,6 +43,7 @@ class agent:
         return self.model
 
 def visualize_trained_agent(env, model, episodes=5):
+    """ Visualize a trained agent in the environment. """
     # testing run loop
     for episode in range(1, episodes+1):
         obs, info = env.reset()
@@ -59,12 +61,14 @@ def visualize_trained_agent(env, model, episodes=5):
     env.close()
 
 def print_results(env):
+    """ Print the results of the training in console. """
     episode_rewards = env.get_episode_rewards()  # only available after Monitor tracks episodes
     print("Episode rewards:", episode_rewards)
     print("Mean reward:", sum(episode_rewards)/len(episode_rewards))
     print("Number of episodes:", len(episode_rewards))
 
 def plot_results(env):
+    """ Plot the results of the training as bar chart. Reward per episode. """
     episode_rewards = env.get_episode_rewards()  # only available after Monitor tracks episodes
     plt.plot(episode_rewards)
     plt.xlabel("Episode")
@@ -242,6 +246,7 @@ if __name__ == "__main__":
     best_model = DQN(
         "CnnPolicy",
         env,
+        buffer_size=50_000, # limit buffer size from memory usage
         learning_rate=best_params["learning_rate"],
         gamma=best_params["gamma"],
         exploration_fraction=best_params["exploration_fraction"],
