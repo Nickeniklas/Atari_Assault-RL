@@ -1,8 +1,8 @@
-# Resultat
+# Results
 
-PPO agent tränad 10000 timesteps.
+PPO agent trained for 10_000 timesteps.
 
-Tensorboard på Browser screenshot:
+**training output:**
 ```
 Starting main.py
 Setting up environment...
@@ -25,12 +25,51 @@ Plotting results...
 and then we get a barchart of rewards overtime:
 ![PPO figure 1](media/PPO_Figure_1.png)
 
-The results are not very good, seems like our PPO agent is stagnating.
+We got a mean reward of ~219.
+
+The results are not very good, seems like our PPO agent is stagnating
+
+## PPO Agent with Optuna tuning
+Tune parameters for 10_000 timesteps.
+
+Train agent with optimized hyperparameters for 100_000 timesteps.
+
+**Tuned Parameters:**
+
+```
+n_steps = trial.suggest_categorical("n_steps", [128, 256, 512, 1024])
+gamma = trial.suggest_float("gamma", 0.9, 0.9999)
+learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
+ent_coef = trial.suggest_float("ent_coef", 0.0, 0.01)
+gae_lambda = trial.suggest_float("gae_lambda", 0.8, 1.0)
+clip_range = trial.suggest_float("clip_range", 0.1, 0.4)
+```
+**Agent results with tuned hyperparameters:**
+**Output:**
+```
+Episode rewards: [315.0, 252.0, 231.0, 315.0, 378.0, 357.0, 399.0, 273.0, 231.0, 315.0, 336.0, 189.0, 273.0, 273.0, 189.0, 378.0, 273.0, 336.0, 231.0, 294.0, 378.0, 420.0, 504.0, 483.0, 357.0, 546.0, 441.0, 252.0, 378.0, 189.0, 483.0, 504.0, 525.0, 567.0, 252.0, 504.0, 462.0, 231.0, 147.0, 315.0, 399.0, 357.0, 210.0, 189.0, 357.0, 420.0, 525.0, 189.0, 315.0, 315.0, 420.0, 294.0, 357.0, 441.0, 462.0, 588.0, 420.0, 315.0, 189.0, 252.0, 567.0, 189.0, 420.0, 567.0, 357.0, 336.0, 420.0, 420.0, 168.0, 189.0, 252.0, 504.0, 315.0, 294.0, 420.0, 357.0, 399.0, 441.0, 462.0, 399.0, 189.0, 399.0, 483.0, 273.0, 441.0, 357.0, 420.0, 525.0, 336.0, 420.0, 399.0, 168.0, 399.0, 483.0, 399.0, 357.0, 
+483.0, 525.0, 357.0, 378.0, 168.0, 609.0, 462.0, 462.0, 420.0, 315.0, 399.0, 336.0, 378.0, 399.0, 378.0, 504.0, 231.0, 609.0, 399.0, 588.0, 462.0, 273.0, 441.0, 147.0, 483.0, 462.0, 231.0, 483.0, 441.0, 504.0, 231.0, 231.0, 252.0, 399.0, 504.0, 231.0, 357.0, 399.0, 189.0, 378.0, 168.0, 420.0, 441.0, 357.0, 483.0, 357.0, 504.0, 399.0, 483.0, 441.0, 546.0, 420.0, 399.0, 609.0, 441.0, 189.0, 483.0, 441.0, 504.0, 189.0, 504.0, 441.0, 399.0, 378.0, 420.0, 441.0, 399.0, 189.0, 357.0, 441.0, 315.0, 525.0, 483.0, 483.0, 378.0, 441.0, 399.0, 399.0, 378.0]
+Mean reward: 376.32
+Number of episodes: 175
+```
+
+Barchart of rewards overtime:
+
+![PPO best model figure](media/PPO_Figure_best.png)
+
+So with a mean reward of 376 over 175 episodes; the progress is very slow but definetly there. Definetly not the most effienct agent to solve this game with.
+
+Summary: 376.32 / 218.84 = 1.719, so with optimized hyperparameters — we increased score by roughly 71.9%. 
+
+## DQN Agent
 
 
-# Annat
 
-## Sources
+# Extra
+The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
+Since Atari Assault is visual, we use CnnPolicy for our Agents.
+
+# Sources
 
 Stable-baselines3 example: https://stable-baselines3.readthedocs.io/en/master/guide/examples.html
 ALE docs: https://ale.farama.org/getting-started/
