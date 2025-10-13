@@ -89,7 +89,7 @@ def tune_ppo(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         clip_range = trial.suggest_float("clip_range", 0.1, 0.4)
 
         # Create environment
-        env = Monitor(gym.make(env_id, render_mode=None))  # No window for faster trials
+        env = Monitor(gym.make(env_id, render_mode=None)) 
 
         # Create PPO model
         model = PPO(
@@ -123,6 +123,46 @@ def tune_ppo(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
     print("Best mean reward:", study.best_value)
     return study.best_params, study
 
+# OPTUNA for DQN 
+def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
+    """
+    Tune DQN hyperparameters with Optuna.
+    Returns the best hyperparameters and the corresponding study.
+    """
+    
+    def objective(trial):
+        model = DQN(
+            "CnnPolicy",
+            env,
+            learning_rate=trial.suggest_loguniform("learning_rate", 1e-5, 1e-3),
+            gamma=trial.suggest_uniform("gamma", 0.90, 0.999),
+            exploration_fraction=trial.suggest_uniform("exploration_fraction", 0.1, 0.4),
+            verbose=0,
+            seed=seed
+        )
+
+        # Create environment
+        env = Monitor(gym.make(env_id, render_mode=None))
+
+        # Train for a short number of timesteps
+        model.learn(total_timesteps=timesteps)
+
+        # Compute mean reward
+        episode_rewards = env.get_episode_rewards()
+        mean_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
+
+        env.close()
+        return mean_reward
+
+    # Run the study
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=n_trials)
+
+    print("Best hyperparameters:", study.best_params)
+    print("Best mean reward:", study.best_value)
+    return study.best_params, study
+    
+
 # script run
 if __name__ == "__main__":
     print("Starting main.py")
@@ -134,7 +174,7 @@ if __name__ == "__main__":
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model(name="PPO", env=env) # "DQN" or "PPO"
+    model = agent.set_model(name="DQN", env=env) # "DQN" or "PPO"
 
     # train agent
     print("Training model...")
@@ -158,7 +198,7 @@ if __name__ == "__main__":
     #print("Testing model...")
     #env = setup_env(render_mode="Human")
     #visualize_trained_agent(env, agent.model, episodes=2)
-
+    """
     # OPTUNA tuning on PPO agent
     print("Tuning new PPO agent hyperparameters with Optuna...")
     env = setup_env(render_mode=None) 
@@ -178,6 +218,32 @@ if __name__ == "__main__":
     )
     best_model.learn(total_timesteps=100_000)  # much longer training
     best_model.save("./models/PPO_assault_best")
+    print("Best model trained and saved.")
+
+    # print and plot results
+    print("Printing results...")
+    print_results(env)
+    print("Plotting results...")
+    plot_results(env)
+
+    env.close()
+    """
+    # OPTUNA tuning on DQN agent
+    print("Tuning new DQN agent hyperparameters with Optuna...")
+    env = setup_env(render_mode=None) 
+    best_params, study = tune_dqn(n_trials=10, timesteps=10_000)
+    
+    # Full training with best hyperparameters (longer)
+    best_model = DQN(
+        "CnnPolicy",
+        env,
+        learning_rate=best_params["learning_rate"],
+        gamma=best_params["gamma"],
+        exploration_fraction=best_params["exploration_fraction"],
+        verbose=1
+    )
+    best_model.learn(total_timesteps=100_000)  # much longer training
+    best_model.save("./models/DQN_assault_best")
     print("Best model trained and saved.")
 
     # print and plot results
