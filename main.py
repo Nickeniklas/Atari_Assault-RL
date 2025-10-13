@@ -11,17 +11,37 @@ import os
 
 #gym.register_envs(ale_py) # if auto registration fails
 
-def main():
+def setup_env():
     env = gym.make('ALE/Assault-v5', render_mode="human")
-    obs, info = env.reset()
-    obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
-
+    env = Monitor(env)
+    
     # debugging
     #print("Action space:", env.action_space)
     #print("Observation space:", env.observation_space)
 
-    # test run with random actions
-    episodes = 5
+    return env
+
+class agent:
+    def __init__(self):
+        self.name = None
+    def set_model(self, name, env):
+        self.name = name
+
+        if not os.path.exists('./logs'):
+            os.makedirs('./logs')
+
+        if name == "DQN":
+            # Dqn Policy for image input, tensorboard logging for visualization
+            model = DQN("CnnPolicy", env, verbose=1, tensorboard_log="./logs/dqn_assault_tensorboard/")
+
+        if name == "PPO":    
+            # Cnn Policy for image input, tensorboard logging for visualization
+            model = PPO("CnnPolicy", env, verbose=1, tensorboard_log="./logs/ppo_assault_tensorboard/")
+
+        return model
+
+def test_trained_agent(env, model, episodes = 5):
+    # testing run loop
     for episode in range(1, episodes+1):
         obs, info = env.reset()
         done = False
@@ -29,7 +49,7 @@ def main():
 
         while not done:
             env.render()
-            action = env.action_space.sample()
+            action = model.predict(obs)
             obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
             score += reward
@@ -40,4 +60,27 @@ def main():
 # script run
 if __name__ == "__main__":
     print("Starting main.py")
-    main()
+    
+    # setup env
+    print("Setting up environment...")
+    env = setup_env()
+
+    # setup model
+    print("Setting up model...")
+    agent = agent()
+    model = agent.set_model("PPO", env)
+
+    # train agent
+    print("Training model...")
+    model.learn(total_timesteps=10000)
+
+    # save agent
+    print("Saving model...")
+    model.save(f"{model.name}_assault")
+
+    # test trained model
+    print("Testing model...")
+    test_trained_agent(env, model, episodes=3)
+
+
+    
