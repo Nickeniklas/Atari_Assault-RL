@@ -39,7 +39,7 @@ class agent:
 
         if name == "DQN":
             # Dqn Policy for image input, tensorboard logging for visualization, memory handling
-            self.model = DQN("CnnPolicy", env, buffer_size=50_000, learning_starts=5000, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
+            self.model = DQN("CnnPolicy", env, buffer_size=100_000, learning_starts=10_000, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
 
         elif name == "PPO":    
             # Cnn Policy for image input, tensorboard logging for visualization
@@ -142,7 +142,9 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         # Suggest hyperparameters
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3)
         gamma = trial.suggest_float("gamma", 0.90, 0.999)
-        exploration_fraction = trial.suggest_float("exploration_fraction", 0.1, 0.4)
+        exploration_fraction = trial.suggest_float("exploration_fraction", 0.05, 0.3)
+        exploration_final_eps = trial.suggest_float("exploration_fraction", 0.01, 0.1)
+        batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
 
         # Create environment
         env, monitor_env = setup_env(render_mode=None)
@@ -150,11 +152,13 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         model = DQN(
             "CnnPolicy",
             env,
-            buffer_size=50_000, # limit buffer size from memory usage
-            learning_starts=5000,
+            buffer_size=100_000, # limit buffer size from memory usage
+            learning_starts=10_000,
             learning_rate=learning_rate,
             gamma=gamma,
             exploration_fraction=exploration_fraction,
+            exploration_final_eps=exploration_final_eps,
+            batch_size=batch_size,
             verbose=0,
             seed=seed
         )
@@ -193,7 +197,7 @@ if __name__ == "__main__":
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model(name="PPO", env=env) # "DQN" or "PPO" 
+    model = agent.set_model(name="DQN", env=env) # "DQN" or "PPO" 
 
     # train agent
     print("Training model...")
@@ -258,11 +262,13 @@ if __name__ == "__main__":
         best_model = DQN(
             "CnnPolicy",
             env,
-            buffer_size=50_000, # limit buffer size from memory usage
-            learning_starts=5000,
+            buffer_size=100_000, # limit buffer size from memory usage
+            learning_starts=10_000,
             learning_rate=best_params["learning_rate"],
             gamma=best_params["gamma"],
             exploration_fraction=best_params["exploration_fraction"],
+            batch_size=best_params["batch_size"],
+            exploration_final_eps=best_params["exploration_final_eps"],
             verbose=1,
             tensorboard_log=f"./logs/assault_tensorboard/"
         )
