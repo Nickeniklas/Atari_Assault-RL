@@ -72,6 +72,57 @@ def plot_results(env):
     plt.title("Training Reward Curve")
     plt.show()
 
+# OPTUNA
+def tune_ppo(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
+    """
+    Tune PPO hyperparameters with Optuna.
+    Returns the best hyperparameters and the corresponding study.
+    """
+    
+    def objective(trial):
+        # Suggest hyperparameters
+        n_steps = trial.suggest_categorical("n_steps", [128, 256, 512, 1024])
+        gamma = trial.suggest_float("gamma", 0.9, 0.9999)
+        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
+        ent_coef = trial.suggest_float("ent_coef", 0.0, 0.01)
+        gae_lambda = trial.suggest_float("gae_lambda", 0.8, 1.0)
+        clip_range = trial.suggest_float("clip_range", 0.1, 0.4)
+
+        # Create environment
+        env = Monitor(gym.make(env_id, render_mode=None))  # No window for faster trials
+
+        # Create PPO model
+        model = PPO(
+            "CnnPolicy",
+            env,
+            n_steps=n_steps,
+            gamma=gamma,
+            learning_rate=learning_rate,
+            ent_coef=ent_coef,
+            gae_lambda=gae_lambda,
+            clip_range=clip_range,
+            verbose=0,
+            seed=seed
+        )
+
+        # Train for a short number of timesteps
+        model.learn(total_timesteps=timesteps)
+
+        # Compute mean reward
+        episode_rewards = env.get_episode_rewards()
+        mean_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
+
+        env.close()
+        return mean_reward
+
+    # Run the study
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=n_trials)
+
+    print("Best hyperparameters:", study.best_params)
+    print("Best mean reward:", study.best_value)
+    return study.best_params, study
+
 # script run
 if __name__ == "__main__":
     print("Starting main.py")
@@ -87,7 +138,7 @@ if __name__ == "__main__":
 
     # train agent
     print("Training model...")
-    agent.model.learn(total_timesteps=10000)
+    agent.model.learn(total_timesteps=30_000) # 30k for quick test, 500k+ for better results
 
     # save agent
     print("Saving model...")
@@ -106,5 +157,22 @@ if __name__ == "__main__":
     #env = setup_env(render_mode="Human")
     #visualize_trained_agent(env, agent.model, episodes=2)
 
+    # OPTUNA tuning on PPO agent
+    best_params, study = tune_ppo(n_trials=20, timesteps=10000)
+    
+    # Full training with best hyperparameters (longer)
+    best_model = PPO(
+        "CnnPolicy",
+        env,
+        n_steps=best_params["n_steps"],
+        gamma=best_params["gamma"],
+        learning_rate=best_params["learning_rate"],
+        ent_coef=best_params["ent_coef"],
+        gae_lambda=best_params["gae_lambda"],
+        clip_range=best_params["clip_range"],
+        verbose=1
+    )
+    best_model.learn(total_timesteps=500_000)  # much longer training
+    best_model.save("./models/PPO_assault_best")
 
     
