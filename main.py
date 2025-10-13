@@ -8,6 +8,7 @@ from stable_baselines3.common.monitor import Monitor
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import gc
 
 #gym.register_envs(ale_py) # if auto registration fails
 
@@ -33,12 +34,12 @@ class agent:
             os.makedirs('./logs')
 
         if name == "DQN":
-            # Dqn Policy for image input, tensorboard logging for visualization
-            self.model = DQN("CnnPolicy", env, buffer_size=50_000, verbose=1, tensorboard_log=f"./logs/{name}_assault_tensorboard/")
+            # Dqn Policy for image input, tensorboard logging for visualization, memory handling
+            self.model = DQN("CnnPolicy", env, buffer_size=30_000, learning_starts=3000, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
 
         elif name == "PPO":    
             # Cnn Policy for image input, tensorboard logging for visualization
-            self.model = PPO("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/{name}_assault_tensorboard/")
+            self.model = PPO("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
 
         return self.model
 
@@ -145,13 +146,14 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         model = DQN(
             "CnnPolicy",
             env,
+            buffer_size=30_000, # limit buffer size from memory usage
+            learning_starts=3000,
             learning_rate=learning_rate,
             gamma=gamma,
             exploration_fraction=exploration_fraction,
             verbose=0,
             seed=seed
         )
-
 
         # Train for a short number of timesteps
         model.learn(total_timesteps=timesteps)
@@ -160,7 +162,11 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
         episode_rewards = env.get_episode_rewards()
         mean_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
 
+        # for memory issues
         env.close()
+        del model
+        gc.collect()
+        
         return mean_reward
 
     # Run the study
@@ -183,7 +189,7 @@ if __name__ == "__main__":
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model(name="DQN", env=env) # "DQN" or "PPO"
+    model = agent.set_model(name="DQN", env=env) # "DQN" or "PPO" 
 
     # train agent
     print("Training model...")
@@ -246,11 +252,13 @@ if __name__ == "__main__":
     best_model = DQN(
         "CnnPolicy",
         env,
-        buffer_size=50_000, # limit buffer size from memory usage
+        buffer_size=30_000, # limit buffer size from memory usage
+        learning_starts=3000,
         learning_rate=best_params["learning_rate"],
         gamma=best_params["gamma"],
         exploration_fraction=best_params["exploration_fraction"],
-        verbose=1
+        verbose=1,
+        tensorboard_log=f"./logs/assault_tensorboard/"
     )
     best_model.learn(total_timesteps=50_000)  
     best_model.save("./models/DQN_assault_best")
