@@ -44,7 +44,7 @@ ent_coef = trial.suggest_float("ent_coef", 0.0, 0.01)
 gae_lambda = trial.suggest_float("gae_lambda", 0.8, 1.0)
 clip_range = trial.suggest_float("clip_range", 0.1, 0.4)
 ```
-**Agent results with tuned hyperparameters:**
+### PPO Agent results with tuned hyperparameters:
 **Output:**
 ```
 Episode rewards: [315.0, 252.0, 231.0, 315.0, 378.0, 357.0, 399.0, 273.0, 231.0, 315.0, 336.0, 189.0, 273.0, 273.0, 189.0, 378.0, 273.0, 336.0, 231.0, 294.0, 378.0, 420.0, 504.0, 483.0, 357.0, 546.0, 441.0, 252.0, 378.0, 189.0, 483.0, 504.0, 525.0, 567.0, 252.0, 504.0, 462.0, 231.0, 147.0, 315.0, 399.0, 357.0, 210.0, 189.0, 357.0, 420.0, 525.0, 189.0, 315.0, 315.0, 420.0, 294.0, 357.0, 441.0, 462.0, 588.0, 420.0, 315.0, 189.0, 252.0, 567.0, 189.0, 420.0, 567.0, 357.0, 336.0, 420.0, 420.0, 168.0, 189.0, 252.0, 504.0, 315.0, 294.0, 420.0, 357.0, 399.0, 441.0, 462.0, 399.0, 189.0, 399.0, 483.0, 273.0, 441.0, 357.0, 420.0, 525.0, 336.0, 420.0, 399.0, 168.0, 399.0, 483.0, 399.0, 357.0, 
@@ -57,13 +57,22 @@ Barchart of rewards overtime:
 
 ![PPO best model figure](media/PPO_Figure_best.png)
 
-So with a mean reward of 376 over 175 episodes; the progress is very slow but definetly there. Definetly not the most effienct agent to solve this game with.
+So with a mean reward of 376 over 175 episodes; the progress is very slow but definetly there. Not the most effienct agent to solve this game.
 
 Summary: 376.32 / 218.84 = 1.719, so with optimized hyperparameters — we increased score by roughly 71.9%. 
 
 ## DQN Agent
 
+Tune parameters for 10_000 timesteps.
 
+Train agent with optimized hyperparameters for 50_000 timesteps.
+
+**Tuned Parameters:**
+```
+learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1e-3)
+gamma = trial.suggest_uniform("gamma", 0.90, 0.999)
+exploration_fraction = trial.suggest_uniform("exploration_fraction", 0.1, 0.4)
+```
 
 # Extra
 The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
