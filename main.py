@@ -152,12 +152,15 @@ if __name__ == "__main__":
     print("Plotting results...")
     plot_results(env)
 
+    env.close()
+
     # visualize trained model
     #print("Testing model...")
     #env = setup_env(render_mode="Human")
     #visualize_trained_agent(env, agent.model, episodes=2)
 
     # OPTUNA tuning on PPO agent
+    env = setup_env(render_mode=None) 
     best_params, study = tune_ppo(n_trials=20, timesteps=10000)
     
     # Full training with best hyperparameters (longer)
@@ -174,5 +177,14 @@ if __name__ == "__main__":
     )
     best_model.learn(total_timesteps=500_000)  # much longer training
     best_model.save("./models/PPO_assault_best")
+    print("Best model trained and saved.")
+
+    # print and plot results
+    print("Printing results...")
+    print_results(env)
+    print("Plotting results...")
+    plot_results(env)
+    
+    env.close()
 
     
