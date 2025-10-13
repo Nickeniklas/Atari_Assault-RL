@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     # train agent
     print("Training model...")
-    agent.model.learn(total_timesteps=30_000) # 30k for quick test, 500k+ for better results
+    agent.model.learn(total_timesteps=10_000) # 10k for quick test
 
     # save agent
     print("Saving model...")
@@ -160,8 +160,9 @@ if __name__ == "__main__":
     #visualize_trained_agent(env, agent.model, episodes=2)
 
     # OPTUNA tuning on PPO agent
+    print("Tuning new PPO agent hyperparameters with Optuna...")
     env = setup_env(render_mode=None) 
-    best_params, study = tune_ppo(n_trials=20, timesteps=10000)
+    best_params, study = tune_ppo(n_trials=15, timesteps=10_000)
     
     # Full training with best hyperparameters (longer)
     best_model = PPO(
@@ -175,7 +176,7 @@ if __name__ == "__main__":
         clip_range=best_params["clip_range"],
         verbose=1
     )
-    best_model.learn(total_timesteps=500_000)  # much longer training
+    best_model.learn(total_timesteps=100_000)  # much longer training
     best_model.save("./models/PPO_assault_best")
     print("Best model trained and saved.")
 
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     print_results(env)
     print("Plotting results...")
     plot_results(env)
-    
+
     env.close()
 
     
