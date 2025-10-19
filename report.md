@@ -23,7 +23,7 @@ Number of episodes: 19
 Plotting results...
 ```
 and then we get a barchart of rewards overtime:
-![PPO figure 1](media/PPO_Figure_1.png)
+![PPO figure 1](./media/PPO_Figure_1.png)
 
 We got a mean reward of ~219.
 
@@ -99,13 +99,13 @@ Number of episodes: 64
 Barchart of rewards per episode:
 ![DQN best model figure](media/DQN_Figure_best.png)
 
-Summary: 254.95 / 255.5 = 0.997, which means the agent did not improve with optuna optimization and instead stayed stagnant. DQN does not work well with visual based problems. The model needs to be so complex that a regular computer might not be enough.
+Summary: 254.95 / 255.5 = 0.997, which means the agent did not improve with optuna optimization and instead stayed stagnant. DQN does not work well with visual based problems. The model couldn't catch the complex patterns probably.
 
 # Extra
 The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
 Since Atari Assault is visual, we use CnnPolicy for our Agents.
 
-Buffer_size and learning_starts fixed to a low value to save memory, since DQN is very fast to eat up huge amounts of memory in such a game.
+Buffer_size and learning_starts fixed to a low value to save memory, since DQN is very fast to eat up huge amounts of memory in such a game (also why its probably not that good).
 
 # Sources
 
