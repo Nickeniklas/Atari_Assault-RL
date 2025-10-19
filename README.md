@@ -22,7 +22,7 @@ Choose model by changing in `__main__`:
 agent.set_model(name="PPO", env=env) # "DQN" or "PPO"
 ```
 
-**Output:** saved trained model and tensorboard file.  
+**Output:** Visualizations of training and saved trained model and tensorboard file.  
 
 ## Visualize results in browser (tensorboard)
 ```
