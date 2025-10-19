@@ -211,5 +211,3 @@ __marimo__/
 logs/
 
 # Ignore all files in models and media folder
-models/
-media/
