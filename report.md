@@ -155,10 +155,17 @@ Number of episodes: 86
 Plotted results:
 ![QR-DQN best 2](media/QR-DQN_Figure_best2.png)
 
-So QR-DQN got basically as good results as PPO could get with half as many timesteps. Definetly the most efficent model, and could be even better with more training.
+QR-DQN got about the same mean as my best PPO. But the PPO agent was trained for twice as long. So QR-DQN is definetly most efficent out of these three models.
 
 # Summary
 Atari Assault is a pixel based (visual) game with alot of stochasticity (randomness). These type of games require alot of exploration, hence its important we have that in our Optuna studies. For Atari Assault even 100_000 timesteps of training is little. 
+
+#### Models
+**PPO** can achieve surprisingly good rewards, but isn't able to learn long patterns. 
+
+**DQN** is so slow and memory heavy that I didn't have time to properly even set benchmarks for it, but it could supposedly learn a little better than PPO after alot of training. 
+
+**QR-DQN** is way more efficent than DQN and showed relativly stable growth. With more training it would definetly get best rewards out of these 3 models m(got same mean reward as PPO with half the training).
 
 # Extra
 The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
@@ -171,7 +178,7 @@ terminal_on_life_loss=True; to treat life loss as episode termination. This made
 better sample the log scale, with log=true:
 `learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)`
 
-Vectorized environments would definetly speed up the training.
+Vectorized environments would definetly speed up the training. 
 
 # Sources
 
