@@ -5,6 +5,7 @@ import ale_py
 import optuna
 from stable_baselines3 import DQN
 from stable_baselines3 import PPO
+from sb3_contrib import RainbowDQN
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 import matplotlib.pyplot as plt
@@ -42,8 +43,10 @@ class agent:
             self.model = DQN("CnnPolicy", env, buffer_size=100_000, learning_starts=10_000, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
 
         elif name == "PPO":    
-            # Cnn Policy for image input, tensorboard logging for visualization
             self.model = PPO("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
+
+        elif name == "RDQN":    
+            self.model = RainbowDQN("CnnPolicy", env, verbose=1, tensorboard_log=f"./logs/assault_tensorboard/")
 
         return self.model
 
@@ -197,7 +200,7 @@ if __name__ == "__main__":
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model(name="DQN", env=env) # "DQN" or "PPO" 
+    model = agent.set_model(name="RDQN", env=env) # "DQN", "PPO" or "RDQN" 
 
     # train agent
     print("Training model...")
@@ -221,7 +224,8 @@ if __name__ == "__main__":
     #print("Testing model...")
     #env = setup_env(render_mode="Human")
     #visualize_trained_agent(env, agent.model, episodes=2)
-    
+
+    # -- OPTUNA HYPER PARAMETER TUNING -- 
     if agent.name == "PPO":
         # OPTUNA tuning on PPO agent
         print("Tuning new PPO agent hyperparameters with Optuna...")
@@ -283,5 +287,9 @@ if __name__ == "__main__":
         plot_results(monitor_env)
 
         env.close()
+    
+    elif agent.name == "RDQN":
+        print("RDQN Finished.")
+
 
         
