@@ -101,15 +101,24 @@ Barchart of rewards per episode:
 
 Summary: 254.95 / 255.5 = 0.997, which means the agent did not improve with optuna optimization and instead stayed stagnant. DQN does not work well with visual based problems. The model couldn't catch the complex patterns probably.
 
+## QR-DQN Agent
+QR-DQN is an improved version of DQN. 
+
+Stable baselines3 - contrib:
+```
+Quantile Regression DQN (QR-DQN) builds on Deep Q-Network (DQN) and make use of quantile regression to explicitly model the distribution over returns, instead of predicting the mean return (DQN).
+```
+
 # Extra
 The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
 Since Atari Assault is visual, we use CnnPolicy for our Agents.
 
-Buffer_size and learning_starts fixed to a low value to save memory, since DQN is very fast to eat up huge amounts of memory in such a game (also why its probably not that good).
+DQN and QR-DQN: Buffer_size and/or learning_starts fixed to a low value to save memory, since DQN is very fast to eat up huge amounts of memory in such a game. 
 
 # Sources
 
 Stable-baselines3 example: https://stable-baselines3.readthedocs.io/en/master/guide/examples.html
+QR-DQN: https://sb3-contrib.readthedocs.io/en/master/modules/qrdqn.html
 ALE docs: https://ale.farama.org/getting-started/
 Atari assault environment: https://ale.farama.org/environments/assault/
 YouTube Ale env tutorial: https://www.youtube.com/watch?v=Y7z30KjLR2M
