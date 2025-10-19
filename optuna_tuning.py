@@ -7,6 +7,7 @@ from sb3_contrib import QRDQN
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.evaluation import evaluate_policy
 import gc
+import numpy as np
 
 from setup_env import setup_env
 
@@ -55,7 +56,7 @@ def tune_ppo(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
 
     # Run the study
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=n_trials)
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
 
     print("Best hyperparameters:", study.best_params)
     print("Best mean reward:", study.best_value)
@@ -108,7 +109,7 @@ def tune_dqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
 
     # Run the study
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=n_trials)
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
 
     print("Best hyperparameters:", study.best_params)
     print("Best mean reward:", study.best_value)
@@ -121,12 +122,17 @@ def tune_qrdqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
     Returns the best hyperparameters and the corresponding study.
     """
     def objective(trial):
+        # Unique random seed per trial
+        seed = np.random.randint(0, 1_000_000)
+
         # Suggest hyperparameters
-        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3)
+        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True) # better sample the log scale
         gamma = trial.suggest_float("gamma", 0.90, 0.999)
         batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
         train_freq = trial.suggest_categorical("train_freq", [1, 4])
-
+        exploration_fraction = trial.suggest_float("exploration_fraction", 0.1, 0.5)
+        exploration_final_eps = trial.suggest_float("exploration_final_eps", 0.01, 0.1)
+        
         # Create environment
         env, monitor_env = setup_env(render_mode=None)
 
@@ -134,10 +140,14 @@ def tune_qrdqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
             "CnnPolicy",
             env,
             buffer_size=100_000, # limit buffer size from memory usage
+            learning_starts=10_000,
             learning_rate=learning_rate,
             gamma=gamma,
             batch_size=batch_size,
             train_freq=train_freq,
+            exploration_fraction=exploration_fraction,
+            exploration_initial_eps=1.0,
+            exploration_final_eps=exploration_final_eps,
             verbose=0,
             seed=seed
         )
@@ -158,7 +168,7 @@ def tune_qrdqn(env_id="ALE/Assault-v5", n_trials=10, timesteps=5000, seed=42):
 
     # Run the study
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=n_trials)
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
 
     print("Best hyperparameters:", study.best_params)
     print("Best mean reward:", study.best_value)

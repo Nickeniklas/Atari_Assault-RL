@@ -18,11 +18,24 @@ if __name__ == "__main__":
     # setup model
     print("Setting up model...")
     agent = agent()
-    model = agent.set_model(name="QRDQN", env=env) # "DQN", "PPO" or "QRDQN" 
+    model = agent.set_model(name="QRDQN", env=env, seed=12) # "DQN", "PPO" or "QRDQN" 
 
     # train agent
     print("Training model...")
     agent.model.learn(total_timesteps=10_000) # 10k for quick test
+
+    episode_rewards = []
+    for _ in range(10):
+        obs, info = env.reset()  # unpack tuple
+        done = False
+        total = 0
+        while not done:
+            action, _ = agent.model.predict(obs)
+            obs, reward, terminated, truncated, info = env.step(action)
+            total += reward
+            done = terminated or truncated  # reset when episode ends
+        episode_rewards.append(total)
+    print(episode_rewards)
 
     # save agent
     print("Saving model...")
@@ -118,6 +131,7 @@ if __name__ == "__main__":
             "CnnPolicy",
             env,
             buffer_size=100_000, # limit buffer size from memory usage
+            learning_starts=10_000,
             learning_rate=best_params["learning_rate"],
             gamma=best_params["gamma"],
             batch_size=best_params["batch_size"],
@@ -125,7 +139,7 @@ if __name__ == "__main__":
             verbose=1,
             tensorboard_log="./logs/assault_tensorboard/"
         )
-        best_model.learn(total_timesteps=100_000)  
+        best_model.learn(total_timesteps=50_000)  
         best_model.save(f"./models/{agent.name}_assault_best")
         print("Best model trained and saved.")
 

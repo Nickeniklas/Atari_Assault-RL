@@ -2,7 +2,7 @@
 
 PPO agent trained for 10_000 timesteps, with mostly default hyperparameters.
 
-**training output:**
+**output:**
 ```
 Starting main.py
 Setting up environment...
@@ -82,7 +82,7 @@ Train agent with optimized hyperparameters for 50_000 timesteps.
 **Tuned Parameters:**
 ```
 learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1e-3)
-gamma = trial.suggest_uniform("gamma", 0.90, 0.999)
+gamma = trial.suggest_float("gamma", 0.90, 0.999)
 exploration_fraction = trial.suggest_uniform("exploration_fraction", 0.1, 0.4)
 ```
 
@@ -107,13 +107,71 @@ QR-DQN is an improved version of DQN.
 Stable baselines3 - contrib:
 ```
 Quantile Regression DQN (QR-DQN) builds on Deep Q-Network (DQN) and make use of quantile regression to explicitly model the distribution over returns, instead of predicting the mean return (DQN).
+
+### Non tuned agent
+**Output:**
 ```
+Episode rewards: [147.0, 0.0, 0.0, 63.0, 0.0, 0.0, 21.0, 21.0, 21.0, 21.0, 63.0]
+Total steps: 119300
+Mean reward: 32.45454545454545
+Number of episodes: 11
+```
+### Optuna tuning
+```
+**Tune parameters for 10_000 timesteps:**
+
+Tuned Parameters:
+```
+learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True) # better sample the log scale
+gamma = trial.suggest_float("gamma", 0.90, 0.999)
+batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
+train_freq = trial.suggest_categorical("train_freq", [1, 4])
+exploration_fraction = trial.suggest_float("exploration_fraction", 0.1, 0.5)
+exploration_final_eps = trial.suggest_float("exploration_final_eps", 0.01, 0.1)
+```
+
+**Train agent with optimized hyperparameters for 50_000 timesteps:**
+
+Output:
+```
+Episode rewards: [273.0, 126.0, 420.0, 189.0, 189.0, 252.0, 399.0, 273.0, 252.0, 231.0, 252.0, 231.0, 189.0, 126.0, 168.0, 315.0, 336.0, 168.0, 441.0, 168.0, 441.0, 336.0, 399.0, 441.0, 294.0, 210.0, 189.0, 42.0, 357.0, 357.0, 399.0, 336.0, 231.0, 294.0, 294.0, 231.0, 273.0, 231.0, 252.0, 336.0, 336.0, 378.0, 252.0, 441.0, 357.0, 420.0, 231.0, 336.0, 231.0, 252.0, 357.0, 525.0, 630.0, 315.0, 231.0, 441.0, 168.0, 
+462.0, 294.0, 294.0, 378.0, 378.0, 378.0, 189.0, 252.0, 336.0, 315.0, 378.0, 336.0, 336.0, 315.0, 210.0, 441.0, 378.0, 441.0, 336.0, 525.0, 420.0, 378.0, 357.0, 420.0, 525.0, 336.0, 231.0, 252.0, 294.0, 357.0, 336.0, 420.0, 357.0, 189.0, 420.0, 357.0, 504.0, 441.0, 273.0, 399.0, 252.0, 420.0, 420.0, 357.0, 399.0, 231.0, 357.0, 441.0, 357.0, 357.0, 378.0, 399.0, 315.0, 420.0, 231.0, 378.0, 441.0, 420.0, 252.0, 399.0, 504.0, 273.0, 378.0, 420.0, 189.0, 483.0, 420.0, 126.0, 336.0, 357.0, 294.0, 357.0, 378.0, 420.0, 420.0, 378.0, 294.0, 378.0, 357.0, 168.0, 336.0, 357.0, 399.0, 294.0, 567.0, 462.0, 315.0, 420.0, 294.0, 462.0, 609.0, 420.0, 357.0, 315.0, 231.0, 315.0, 504.0, 546.0, 378.0, 168.0, 378.0, 210.0, 210.0, 315.0, 294.0, 252.0, 441.0, 357.0, 420.0, 504.0, 252.0, 189.0, 378.0, 546.0]
+Mean reward: 337.5964912280702
+Number of episodes: 171
+```
+
+Plotted results:
+![QR-DQN best 1](media/QR-DQN_Figure_best.png)
+
+Second run (new 50_000 steps trained agent): 
+```
+Episode rewards: [252.0, 294.0, 357.0, 210.0, 189.0, 189.0, 189.0, 378.0, 399.0, 168.0, 210.0, 357.0, 210.0, 252.0, 336.0, 189.0, 231.0, 147.0, 42.0, 567.0, 483.0, 504.0, 315.0, 252.0, 315.0, 378.0, 336.0, 462.0, 315.0, 399.0, 273.0, 567.0, 420.0, 462.0, 273.0, 399.0, 252.0, 483.0, 336.0, 357.0, 231.0, 420.0, 189.0, 504.0, 231.0, 315.0, 462.0, 462.0, 252.0, 273.0, 378.0, 378.0, 273.0, 399.0, 399.0, 378.0, 441.0, 
+504.0, 378.0, 357.0, 672.0, 378.0, 546.0, 441.0, 399.0, 462.0, 567.0, 294.0, 462.0, 504.0, 420.0, 189.0, 189.0, 378.0, 399.0, 441.0, 252.0, 420.0, 378.0, 357.0, 420.0, 357.0, 504.0, 315.0, 399.0, 525.0]      
+Total steps: 201217
+Mean reward: 356.2674418604651
+Number of episodes: 86
+```
+
+Plotted results:
+![QR-DQN best 2](media/QR-DQN_Figure_best2.png)
+
+So QR-DQN got basically as good results as PPO could get with half as many timesteps. Definetly the most efficent model, and could be even better with more training.
+
+# Summary
+Atari Assault is a pixel based (visual) game with alot of stochasticity (randomness). These type of games require alot of exploration, hence its important we have that in our Optuna studies. For Atari Assault even 100_000 timesteps of training is little. 
 
 # Extra
 The CnnPolicy (Convolutional Neural Network policy) is designed to process visual inputs.
 Since Atari Assault is visual, we use CnnPolicy for our Agents.
 
 DQN and QR-DQN: Buffer_size and/or learning_starts fixed to a low value to save memory, since DQN is very fast to eat up huge amounts of memory in such a game. 
+
+terminal_on_life_loss=True; to treat life loss as episode termination. This made all rewards monitor rewards 0.
+
+better sample the log scale, with log=true:
+`learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)`
+
+Vectorized environments would definetly speed up the training.
 
 # Sources
 

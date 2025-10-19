@@ -22,6 +22,7 @@ def print_results(monitor_env):
     """ Print the results of the training in console. """
     episode_rewards = monitor_env.get_episode_rewards()  # only available after Monitor tracks episodes
     print("Episode rewards:", episode_rewards)
+    print("Total steps:", monitor_env.get_total_steps())
     print("Mean reward:", sum(episode_rewards)/len(episode_rewards))
     print("Number of episodes:", len(episode_rewards))
 

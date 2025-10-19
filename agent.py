@@ -6,7 +6,7 @@ import os
 class agent:
     def __init__(self):
         self.name = None
-    def set_model(self, name, env):
+    def set_model(self, name, env, seed=42):
         """ Set up the RL agent model based on the specified name. (Optional)"""
         self.name = name
         self.model = None
@@ -22,6 +22,6 @@ class agent:
             self.model = PPO("CnnPolicy", env, verbose=1, tensorboard_log="./logs/assault_tensorboard/")
 
         elif name == "QRDQN":    
-            self.model = QRDQN("CnnPolicy", env, buffer_size=100_000, verbose=1, tensorboard_log="./logs/assault_tensorboard/")
+            self.model = QRDQN("CnnPolicy", env, seed=seed, buffer_size=100_000, verbose=1, tensorboard_log="./logs/assault_tensorboard/")
 
         return self.model

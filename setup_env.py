@@ -8,7 +8,8 @@ import ale_py
 def setup_env(render_mode=None):
     base_env = gym.make('ALE/Assault-v5', render_mode=render_mode, frameskip=1) # disable base env skipping
     monitor_env = Monitor(base_env)
-    preprocessing_env = AtariPreprocessing(monitor_env)  # grayscale, downsample, skip frames
+    #grayscale, downsample, skip frames #treating life loss as episode termination
+    preprocessing_env = AtariPreprocessing(monitor_env)  
     stacked_env = FrameStackObservation(preprocessing_env, 4)       # stacked frames for temporal info
     
     # debugging
